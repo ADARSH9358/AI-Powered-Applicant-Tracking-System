@@ -3,7 +3,7 @@ import Navbar from "~/components/Navbar";
 import FileUploader from "~/components/FileUploader";
 import {usePuterStore} from "~/lib/puter";
 import {useNavigate} from "react-router";
-import {convertPdfToImage} from "~/lib/pdf2img";
+import {convertPdfToImage, extractTextFromPdf} from "~/lib/pdf2img";
 import {generateUUID} from "~/lib/utils";
 import {prepareInstructions} from "../../constants";
 
@@ -24,6 +24,11 @@ const Upload = () => {
         setStatusText('Uploading the file...');
         const uploadedFile = await fs.upload([file]);
         if(!uploadedFile) return setStatusText('Error: Failed to upload file');
+
+        setStatusText('Extracting text from resume...');
+        const resumeText = await extractTextFromPdf(file);
+        if(!resumeText) return setStatusText('Error: Failed to extract text from resume');
+        console.log('📄 Extracted Resume Text:', resumeText);
 
         setStatusText('Converting to image...');
         const imageFile = await convertPdfToImage(file);
@@ -47,10 +52,12 @@ const Upload = () => {
         setStatusText('Analyzing...');
 
         const feedback = await ai.feedback(
-            uploadedFile.path,
+            resumeText,
             prepareInstructions({ jobTitle, jobDescription })
         )
         if (!feedback) return setStatusText('Error: Failed to analyze resume');
+
+        console.log('✅ LLM Feedback Response:', feedback);
 
         const feedbackText = typeof feedback.message.content === 'string'
             ? feedback.message.content

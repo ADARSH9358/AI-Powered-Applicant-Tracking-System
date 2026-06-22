@@ -83,3 +83,26 @@ export async function convertPdfToImage(
         };
     }
 }
+
+export async function extractTextFromPdf(file: File): Promise<string> {
+    try {
+        const lib = await loadPdfJs();
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
+        
+        let fullText = "";
+        
+        // Extract text from all pages
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item: any) => item.str).join(" ");
+            fullText += pageText + "\n";
+        }
+        
+        return fullText;
+    } catch (err) {
+        console.error("Failed to extract text from PDF:", err);
+        return "";
+    }
+}

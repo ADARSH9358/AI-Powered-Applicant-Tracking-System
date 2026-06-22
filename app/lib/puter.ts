@@ -327,30 +327,32 @@ export const usePuterStore = create<PuterStore>((set, get) => {
         >;
     };
 
-    const feedback = async (path: string, message: string) => {
+    const feedback = async (resumeText: string, message: string) => {
         const puter = getPuter();
         if (!puter) {
             setError("Puter.js not available");
             return;
         }
 
+        const payload: ChatMessage[] = [
+            {
+                role: "user",
+                content: [
+                    {
+                        type: "text",
+                        text: `Resume Content:\n${resumeText}\n\n${message}`,
+                    },
+                ],
+            },
+        ];
+
+        console.log('🚀 Sending Payload to LLM:');
+        console.log('Payload:', payload);
+        console.log('Model:', 'gpt-5.4-nano');
+
         return puter.ai.chat(
-            [
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "file",
-                            puter_path: path,
-                        },
-                        {
-                            type: "text",
-                            text: message,
-                        },
-                    ],
-                },
-            ],
-            { model: "claude-3-7-sonnet" }
+            payload,
+            { model: "gpt-5.4-nano" }
         ) as Promise<AIResponse | undefined>;
     };
 
